@@ -1,1 +1,138 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14233A">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<title>لعبة خمّن الرقم</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#EEF2F7;--surface:#FFFFFF;--ink:#14233A;--mute:#5B6B82;--line:#D5DDE8;--acc:#2F5BEA;--accInk:#FFFFFF;--good:#12805C;--bad:#B4401A;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1726;--surface:#18233A;--ink:#E8EEFA;--mute:#98A6C0;--line:#2B3A57;--acc:#7CA2FF;--accInk:#0F1726;--good:#4CC79A;--bad:#FF9A70}}
+:root[data-theme="dark"]{--bg:#0F1726;--surface:#18233A;--ink:#E8EEFA;--mute:#98A6C0;--line:#2B3A57;--acc:#7CA2FF;--accInk:#0F1726;--good:#4CC79A;--bad:#FF9A70}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background-color:var(--bg);background-image:radial-gradient(circle at 12% 0%,color-mix(in srgb,var(--acc) 16%,transparent) 0,transparent 46%),radial-gradient(circle at 100% 100%,color-mix(in srgb,var(--good) 14%,transparent) 0,transparent 42%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cg fill='%238090b4' fill-opacity='.10' font-family='sans-serif' font-weight='700'%3E%3Ctext x='14' y='42' font-size='36'%3E?%3C/text%3E%3Ctext x='84' y='76' font-size='26'%3E42%3C/text%3E%3Ctext x='30' y='128' font-size='22'%3E7%3C/text%3E%3Ctext x='108' y='134' font-size='32'%3E?%3C/text%3E%3C/g%3E%3C/svg%3E");background-attachment:fixed;color:var(--ink);font-family:"Cairo","Segoe UI",Tahoma,sans-serif;line-height:1.6}
+main{max-width:460px;margin:0 auto;padding:22px 18px 40px}
+h1{font-size:2.1rem;font-weight:800;margin:0 0 2px;letter-spacing:0}
+.sub{color:var(--mute);margin:0 0 18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 16px 14px;margin-bottom:14px}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.range{font-size:1.15rem;font-weight:600}
+.range b{font-size:1.6rem;font-weight:800;color:var(--acc)}
+.track{position:relative;height:14px;border-radius:7px;background:var(--line);direction:ltr;margin:12px 0 6px;overflow:hidden}
+.seg{position:absolute;top:0;bottom:0;background:var(--acc);border-radius:7px;transition:left .35s,width .35s;min-width:8px}
+.ends{display:flex;justify-content:space-between;direction:ltr;color:var(--mute);font-size:.8rem}
+.dots{display:flex;gap:8px;align-items:center}
+.dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--line)}
+.dot.on{background:var(--acc);border-color:var(--acc)}
+.dot.win{background:var(--good);border-color:var(--good)}
+.dot.lose{background:var(--bad);border-color:var(--bad)}
+.lbl{color:var(--mute);font-size:.9rem}
+.ctl{display:flex;gap:10px}
+input{flex:1;min-width:0;font:inherit;font-size:1.5rem;font-weight:600;text-align:center;padding:10px 12px;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--ink)}
+button{font:inherit;font-weight:600;font-size:1.1rem;border:0;border-radius:14px;padding:10px 22px;background:var(--acc);color:var(--accInk);cursor:pointer}
+button:active{transform:scale(.97)}
+input:focus-visible,button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.msg{min-height:2.9em;margin:12px 2px 0;font-weight:600}
+.msg.bad{color:var(--bad)}.msg.good{color:var(--good)}
+.hist{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{padding:3px 12px;border-radius:999px;border:1.5px solid var(--line);font-weight:600;direction:ltr}
+.chip.low{border-color:var(--acc);color:var(--acc)}
+.chip.high{border-color:var(--bad);color:var(--bad)}
+.chip.ok{border-color:var(--good);color:var(--good)}
+.hide{display:none}
+#again{width:100%}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <h1>خمّن الرقم</h1>
+  <p class="sub">فكّرتُ برقم من 1 إلى 100. عندك 7 محاولات.</p>
 
+  <section class="card" aria-label="المدى">
+    <div class="row">
+      <div class="range">الرقم بين <b id="lo">1</b> و <b id="hi">100</b></div>
+    </div>
+    <div class="track"><div class="seg" id="seg" style="left:0%;width:100%"></div></div>
+    <div class="ends"><span>1</span><span>100</span></div>
+  </section>
+
+  <section class="card">
+    <div class="row" style="margin-bottom:12px">
+      <div class="dots" id="dots" aria-label="المحاولات"></div>
+      <div class="lbl">أفضل نتيجة: <span id="best">—</span></div>
+    </div>
+    <div class="ctl" id="ctl">
+      <input id="g" type="number" inputmode="numeric" min="1" max="100" placeholder="رقمك" aria-label="رقمك">
+      <button id="go">خمّن</button>
+    </div>
+    <button id="again" class="hide">العب من جديد</button>
+    <div class="msg" id="msg" aria-live="polite"></div>
+    <div class="hist" id="hist"></div>
+  </section>
+</main>
+
+<script>
+(function(){
+  var MAX=7,n,lo,hi,tries,hist,over,best=null;
+  var $=function(i){return document.getElementById(i)};
+  try{var b=localStorage.getItem('guess-best');if(b){best=parseInt(b,10)||null}}catch(e){}
+
+  function setMsg(t,c){var m=$('msg');m.textContent=t;m.className='msg'+(c?' '+c:'')}
+  function render(){
+    $('lo').textContent=lo;$('hi').textContent=hi;
+    var left=(lo-1)/99*100,w=Math.max((hi-lo)/99*100,2);
+    $('seg').style.left=left+'%';$('seg').style.width=w+'%';
+    var d='';
+    for(var i=0;i<MAX;i++){
+      var c='dot';
+      if(i<tries){c+=' on';if(over&&i===tries-1){c=(hist[hist.length-1].t==='ok')?'dot win':'dot lose'}}
+      d+='<span class="'+c+'"></span>';
+    }
+    $('dots').innerHTML=d;
+    $('best').textContent=best?best+' محاولات':'—';
+    var h='';
+    for(var j=0;j<hist.length;j++){
+      var x=hist[j],ar=x.t==='low'?' ↑':(x.t==='high'?' ↓':' ✓');
+      h+='<span class="chip '+x.t+'">'+x.g+ar+'</span>';
+    }
+    $('hist').innerHTML=h;
+  }
+  function start(){
+    n=1+Math.floor(Math.random()*100);lo=1;hi=100;tries=0;hist=[];over=false;
+    $('ctl').classList.remove('hide');$('again').classList.add('hide');
+    $('g').value='';setMsg('نصيحة: ابدأ بـ 50، وبعدها نصّف المدى كل مرة.','');
+    render();$('g').focus();
+  }
+  function finish(){
+    over=true;$('ctl').classList.add('hide');$('again').classList.remove('hide');
+  }
+  function guess(){
+    if(over)return;
+    var g=parseInt($('g').value,10);
+    if(!(g>=1&&g<=100)){setMsg('اكتب رقماً صحيحاً من 1 إلى 100','bad');return}
+    tries++;
+    if(g===n){
+      hist.push({g:g,t:'ok'});
+      if(!best||tries<best){best=tries;try{localStorage.setItem('guess-best',String(best))}catch(e){}}
+      setMsg('صح! الرقم هو '+n+'، وجدته في المحاولة '+tries+'.','good');finish();
+    }else{
+      if(g<n){hist.push({g:g,t:'low'});lo=Math.max(lo,g+1);setMsg(g+' أصغر من الرقم. جرّب رقماً أعلى.','')}
+      else{hist.push({g:g,t:'high'});hi=Math.min(hi,g-1);setMsg(g+' أكبر من الرقم. جرّب رقماً أقل.','')}
+      if(tries>=MAX){setMsg('انتهت المحاولات. الرقم كان '+n+'.','bad');finish()}
+    }
+    $('g').value='';render();
+    if(over){$('again').focus()}else{$('g').focus()}
+  }
+  $('go').addEventListener('click',guess);
+  $('g').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();guess()}});
+  $('again').addEventListener('click',start);
+  start();
+})();
+</script>
+</body>
+</html>
